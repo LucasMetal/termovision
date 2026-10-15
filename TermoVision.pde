@@ -5,7 +5,6 @@ import java.awt.*;
 // Artifacts ideas:
 // Target Acquired (with maximazed pic)
 // Port (port open/closed, base for adding an external piece of hardware maybe?)
-// Code pages
 
 Capture cam;
 OpenCV opencv;
@@ -20,6 +19,7 @@ Crosshair crosshair;
 Grid grid;
 MainMessage mainMessage;
 PowerSystem powerSystem;
+CodePage codePage;
 
 void settings() {
   /*
@@ -30,7 +30,7 @@ void settings() {
    */
    
   // Uncomment for testing
-  //useCam = false;
+  useCam = false;
   //useOpenCV = false;
 
   size(1920, 1080);
@@ -65,7 +65,9 @@ void setup() {
   grid = new Grid(width - 500, 100, 400, 300, 10, useCam && useOpenCV ? 9 : 3);
   grid.show(20);
 
-  mainMessage = new MainMessage (width/3, height - 200);  
+  codePage = new CodePage();
+
+  mainMessage = new MainMessage (width/3, height - 200);
   startInitMessages();
   
   println ("Started");
@@ -88,6 +90,9 @@ void draw() {
 
   grid.update(t);
   grid.draw();
+
+  codePage.update(t);
+  codePage.draw();
 
   mainMessage.update();
   mainMessage.draw(t);
@@ -122,6 +127,10 @@ void mousePressed() {
 
 void keyPressed(){
   switch(key){
+    case 'c':{
+      codePage.showNext();
+      break;
+    }
     case 'd':{
       startDemo();
       break;
@@ -210,7 +219,13 @@ void runDemo(int t){
       break;
     }
     case 6: {
-      if (dt < 30) return;
+      if (dt < 28) return;
+      codePage.show(1); // Page 2 doesn't overlap the main message
+      demoStep++;
+      break;
+    }
+    case 7: {
+      if (dt < 33) return; // ~4s for the code page to write, flash and hide
       powerSystem.powerOff();
       demoStep++;
       break;
