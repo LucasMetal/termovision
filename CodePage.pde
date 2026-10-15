@@ -1,12 +1,6 @@
 // Ideas:
 // Add more pages (picked randomly or by context, e.g. when a face is detected)
 
-enum CodePageState {
-  HIDDEN,
-  WRITING,
-  FLASHING
-}
-
 // A group of lines drawn together. All values are fractions of the screen size, so it adapts to any resolution
 class CodeBlock {
 
@@ -28,17 +22,15 @@ class CodePage {
   final int FLASHES = 3;
 
   CodeBlock[][] pages;
-  CodeBlock[] page;
-  CodePageState state;
-  int pageIndex, lineCount, totalLines, toggles, speed, flashSpeed, tprev;
-  Boolean visible;
+  CodeBlock[] page; // null when hidden
+  int pageIndex, totalLines, speed, flashSpeed, tStart;
+  int lineCount; // Computed on each update
+  boolean visible;
   PFont font;
 
   CodePage () {
     speed = 60; // ms per line
     flashSpeed = 150; // ms per flash toggle
-    state = CodePageState.HIDDEN;
-    visible = false;
 
     font = createFont("modern-vision.ttf", 32);
 
@@ -61,42 +53,34 @@ class CodePage {
     totalLines = 0;
     for (CodeBlock block : page) totalLines += block.lines.length;
 
-    lineCount = 0;
-    toggles = 0;
-    visible = true;
-    tprev = millis();
-    state = CodePageState.WRITING;
+    tStart = millis();
   }
 
+  // Everything is derived from the time elapsed since show: writing, then flashing, then hidden
   void update(int t) {
+    if (page == null) return;
 
-    switch (state) {
-      case WRITING: { // One more line every "speed" ms
-        if (t - tprev > speed) {
-          lineCount++;
-          tprev = t;
-        }
+    int e = t - tStart;
+    int writeTime = totalLines * speed;
 
-        if (lineCount >= totalLines) state = CodePageState.FLASHING;
-        break;
-      }
-      case FLASHING: { // hide/show FLASHES times, then hide for good
-        if (t - tprev > flashSpeed) {
-          visible = !visible;
-          toggles++;
-          tprev = t;
-        }
-
-        if (toggles > FLASHES * 2) state = CodePageState.HIDDEN;
-        break;
-      }
-      case HIDDEN:
-        break;
+    if (e < writeTime) { // One more line every "speed" ms
+      lineCount = e / speed;
+      visible = true;
+      return;
     }
+
+    // Toggles every "flashSpeed" ms starting visible, hides FLASHES times, then hides for good
+    int toggles = (e - writeTime) / flashSpeed;
+    if (toggles > FLASHES * 2) {
+      page = null;
+      return;
+    }
+    lineCount = totalLines;
+    visible = toggles % 2 == 0;
   }
 
   void draw() {
-    if (state == CodePageState.HIDDEN || !visible) return;
+    if (page == null || !visible) return;
 
     push();
     textFont(font);

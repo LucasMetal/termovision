@@ -4,8 +4,10 @@ import java.util.ArrayDeque;
 class MainMessage {
 
   Queue<String> phrasesQueue = new ArrayDeque<String>();
-  int x, y, count, speed, mode, tprev, tflash, tshow;
-  String message;
+  final int FLASH_TIME = 3000; // ms flashing after the message is written
+
+  int x, y, speed, tStart, elapsed;
+  String message; // null when idle
   PFont font;
   String[] phrases = {
     // [QUESTIONS/ANSWERS]
@@ -38,15 +40,11 @@ class MainMessage {
     speed = 100;
 
     font = createFont("modern-vision.ttf", 100);
-    mode = 3; // Starts checking the queue
   }
 
   void start (String message) {
-    count = 0;
-    mode = 0;
-    tprev = 0;
-
     this.message = message;
+    tStart = millis();
 
     println("started : " + message);
   }
@@ -60,76 +58,33 @@ class MainMessage {
     println("enqueued : " + message);
   }
 
-  void update() {
+  // Everything is derived from the time elapsed since start: writing, then flashing for FLASH_TIME ms, then idle
+  void update(int t) {
+    elapsed = t - tStart;
+
+    if (message != null && elapsed >= message.length() * speed + FLASH_TIME) message = null;
+
+    if (message == null && phrasesQueue.size() > 0) {
+      start(phrasesQueue.remove());
+      elapsed = 0;
+    }
   }
 
-  void draw(int t) {
+  void draw() {
+    if (message == null) return;
 
-    //textSize(100);
     textFont(font);
 
-    switch (mode) {
-      case 0:
-        { // writing
-  
-          if (t - tprev > speed) {
-            count++;
-            tprev = t;
-          }
-  
-          text(message.substring(0, Math.min(count, message.length())), x, y);
-          drawRectangle(count);
-  
-          if (count == message.length()) {
-            mode++;
-            tflash = t;
-            tshow = t;
-          }
-  
-          break;
-        }
-      case 1:
-        { // flashing - show
-  
-          text(message, x, y);
-          drawRectangle(message.length());
-  
-          println("show - sub :" + (t - tshow));
-          
-          if ((t - tshow) > speed) {
-            mode++;
-            tshow = t;
-          }
-  
-          break;
-        }
-      case 2:
-        { // flashing - hide
-  
-          if ((t - tflash) > 3 * 1000) mode++;
-  
-          println("hide - sub :" + (t - tshow));
-          
-          println(String.format("hide - t : %s - tshow: %s", t, tshow));
-          
-          
-          
-          if ((t - tshow) > speed/2) {
-            mode--;
-            tshow = t;
-            println("hide - update mode");
-          }
-  
-          break;
-        }
-      case 3:
-        { // ended
-          if (phrasesQueue.size() > 0) {
-            start(phrasesQueue.remove());
-          }
-          break;
-        }
-      }
+    int typeTime = message.length() * speed;
+
+    if (elapsed < typeTime) { // writing, one more char every "speed" ms
+      int chars = elapsed / speed;
+      text(message.substring(0, chars), x, y);
+      drawRectangle(chars);
+    } else if ((elapsed - typeTime) % (speed + speed/2) < speed) { // flashing, shown "speed" ms and hidden "speed/2" ms
+      text(message, x, y);
+      drawRectangle(message.length());
+    }
   }
 
   void drawRectangle(int charCount) {

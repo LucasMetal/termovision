@@ -94,8 +94,8 @@ void draw() {
   codePage.update(t);
   codePage.draw();
 
-  mainMessage.update();
-  mainMessage.draw(t);
+  mainMessage.update(t);
+  mainMessage.draw();
 
   // All this could be inside the crosshair
   if (useCam && useOpenCV) {
