@@ -62,7 +62,7 @@ void setup() {
   
   crosshair = new Crosshair(200);
 
-  grid = new Grid(width - 500, 100, 400, 300, 10, useCam && useOpenCV ? 9 : 3);
+  grid = new Grid(width - 500, 100, 400, 300, 10, 180);
   grid.show(20);
 
   codePage = new CodePage();

@@ -1,70 +1,83 @@
 class Grid{
 
-  int width, height, step, x, y, xLine, yLine, speedX, speedY, endTime;
-  Boolean show;
+  int w, h, step, x, y, speed, tStart, endTime; // speed in px per second
+  float xLine, yLine, xOffset, yOffset;
+  boolean visible;
   PGraphics g;
-  
-  Grid (int x, int y, int width, int height, int step, int speed){
-    this.width = width;
-    this.height = height;
+
+  Grid (int x, int y, int w, int h, int step, int speed){
+    this.w = w;
+    this.h = h;
     this.step = step;
     this.x = x;
     this.y = y;
-    this.xLine = 0;
-    this.yLine = 0;
-    this.speedX = speed;
-    this.speedY = speed;
-    
-    initGrid();    
+    this.speed = speed;
+
+    initGrid();
   }
-  
+
   void initGrid(){
-    g = createGraphics(width+1, height+1); // +1 so it shows the border
+    g = createGraphics(w+1, h+1); // +1 so it shows the border
     g.beginDraw();
     g.stroke(255);
-    
+
     // Vertical lines
-    int stepInc = width/step;    
-    for (int i = 0; i <= step; i++ ) {      
-      g.line(i*stepInc, 0, i*stepInc, height);
+    for (int i = 0; i <= step; i++ ) {
+      float lx = i * w / (float)step;
+      g.line(lx, 0, lx, h);
     }
-    
+
     // Horizontal lines
-    stepInc = height/step;
-    for (int i = 0; i <= step; i++ ) {      
-      g.line(0, i*stepInc, width, i*stepInc);
+    for (int i = 0; i <= step; i++ ) {
+      float ly = i * h / (float)step;
+      g.line(0, ly, w, ly);
     }
-    
-    g.endDraw();    
+
+    g.endDraw();
   }
-  
+
   void show(int seconds){
-    show = true;
-    endTime = millis() + seconds * 1000;
+    visible = true;
+    tStart = millis();
+    endTime = tStart + seconds * 1000;
+
+    // Random start position and direction for each scan line (a full bounce cycle is 2 * size)
+    xOffset = random(2 * w);
+    yOffset = random(2 * h);
   }
-  
+
+  // The scan lines position is derived from the time elapsed since show
   void update(int t){
-    
-    if (!show) return;
-    
-    xLine += speedX;
-    yLine += speedY;
-    
-    if (xLine < 0 || xLine > width) speedX *= -1;
-    if (yLine < 0 || yLine > height) speedY *= -1;
-    
-    if (t > endTime) show = false; 
+
+    if (!visible) return;
+
+    if (t > endTime) {
+      visible = false;
+      return;
+    }
+
+    int e = t - tStart;
+    xLine = pingPong(e, w, xOffset);
+    yLine = pingPong(e, h, yOffset);
   }
-  
+
+  // Bounces between 0 and max, moving "speed" px per second, starting "offset" px into the cycle
+  float pingPong(int e, int max, float offset) {
+    float p = (e * speed / 1000.0 + offset) % (2 * max);
+    return p < max ? p : 2 * max - p;
+  }
+
   void draw ()
   {
-    if (!show) return;
-    
+    if (!visible) return;
+
     image(g, x, y);
-    
+
+    push();
     stroke(255);
     strokeWeight(5);
-    line(x + xLine, y, x + xLine, y + height);
-    line(x, y + yLine, x + width, y + yLine);
+    line(x + xLine, y, x + xLine, y + h);
+    line(x, y + yLine, x + w, y + yLine);
+    pop();
   }
 }
