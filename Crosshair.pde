@@ -1,12 +1,20 @@
 class Crosshair{
-  
+
+  final int DETECT_SCALE = 5; // Faces are detected on a frame downscaled by this factor, for speed
+
   int size, x, y;
   PGraphics aim;
-  
-  Crosshair (int size){
-    this.size = size;    
+  OpenCV opencv; // null when following the mouse
+
+  Crosshair (int size, boolean useFaceDetection){
+    this.size = size;
     x = y = 0;
-    
+
+    if (useFaceDetection) {
+      opencv = new OpenCV(TermoVision.this, width/DETECT_SCALE, height/DETECT_SCALE);
+      opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);
+    }
+
     createAim();
   }
   
@@ -48,9 +56,29 @@ class Crosshair{
     aim.updatePixels();
   }
   
-  void update(int x, int y){
-    this.x = x;
-    this.y = y;
+  // Follows the first detected face (or stays put if there's none), or the mouse without face detection.
+  // The frame is resized in place, so it can't be used afterwards
+  void update(PImage frame){
+    if (opencv == null) {
+      x = mouseX;
+      y = mouseY;
+      return;
+    }
+
+    frame.resize(width/DETECT_SCALE, height/DETECT_SCALE);
+
+    opencv.loadImage(frame);
+    Rectangle[] faces = opencv.detect();
+
+    //for (int i = 0; i < faces.length; i++) {
+        //println(faces[i].x + "," + faces[i].y);
+        //rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
+    //}
+
+    if (faces.length > 0) {
+      x = (faces[0].x + faces[0].width/2) * DETECT_SCALE;
+      y = (faces[0].y + faces[0].height/2) * DETECT_SCALE;
+    }
   }
 
   void draw(){

@@ -7,10 +7,8 @@ import java.awt.*;
 // Port (port open/closed, base for adding an external piece of hardware maybe?)
 
 Capture cam;
-OpenCV opencv;
 Boolean useCam = true;
 Boolean useOpenCV = true;
-Rectangle[] faces;
 PImage camFrame;
 PImage fakeFrame;
 int tDemoStart, demoStep = -1;
@@ -41,12 +39,6 @@ void setup() {
   // Init cam
   if (useCam) {
     cam = new Capture(this, width, height);
-
-    if (useOpenCV) {
-      opencv = new OpenCV(this, width/5, height/5);
-      opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);
-    }
-
     cam.start();
     printArray(Capture.list());
   }
@@ -60,7 +52,7 @@ void setup() {
 
   powerSystem = new PowerSystem();
   
-  crosshair = new Crosshair(200);
+  crosshair = new Crosshair(200, useCam && useOpenCV);
 
   grid = new Grid(width - 500, 100, 400, 300, 10, 180);
   grid.show(20);
@@ -97,26 +89,7 @@ void draw() {
   mainMessage.update(t);
   mainMessage.draw();
 
-  // All this could be inside the crosshair
-  if (useCam && useOpenCV) {
-    camFrame.resize(width/5, height/5);
-
-    opencv.loadImage(camFrame);
-    faces = opencv.detect();
-    
-    //for (int i = 0; i < faces.length; i++) {
-        //println(faces[i].x + "," + faces[i].y);
-        //rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
-    //}
-    
-    if (faces.length > 0) {
-      crosshair.update(
-        (int)map(faces[0].x + faces[0].width/2, 0, width/5, 0, width),
-        (int)map(faces[0].y + faces[0].height/2, 0, height/5, 0, height));
-    }
-  } else {
-    crosshair.update(mouseX, mouseY);
-  }
+  crosshair.update(camFrame); // Last, it resizes camFrame
   crosshair.draw();
   
 }
