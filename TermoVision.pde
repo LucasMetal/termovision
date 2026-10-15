@@ -28,9 +28,11 @@ void settings() {
    */
    
   // Uncomment for testing
-  useCam = false;
+  //useCam = false;
   //useOpenCV = false;
 
+  // Not P2D: with the camera it's barely faster (OpenCV is the bottleneck) and face tracking gets jumpy,
+  // since Capture's pixels[] are only filled through loadPixels() from the GPU buffer
   size(1920, 1080);
 }
 
@@ -67,13 +69,12 @@ void setup() {
 
 void draw() {
 
+  surface.setTitle("fps " + nf(frameRate, 0, 1)); // show FPS in title
+  
   int t = millis();  
   
-  if (useCam) {
-    camFrame = cam.get();    
-  } else {
-    camFrame = fakeFrame.copy();
-  }
+  // No per-frame copies: a new full-size image every frame is slow, and very slow in P2D (one new texture per frame)
+  camFrame = useCam ? cam : fakeFrame;
   
   runDemo(t);
   
@@ -89,7 +90,7 @@ void draw() {
   mainMessage.update(t);
   mainMessage.draw();
 
-  crosshair.update(camFrame); // Last, it resizes camFrame
+  crosshair.update(camFrame);
   crosshair.draw();
   
 }
