@@ -1,15 +1,22 @@
 class Crosshair{
 
   final int DETECT_SCALE = 5; // Faces are detected on a frame downscaled by this factor, for speed
+  final float EASING_MS = 70; // How fast the crosshair catches up with the detected face (lower is faster)
 
-  int size, x, y;
+  int size, tPrev;
+  float x, y;
   PGraphics aim;
   OpenCV opencv; // null when following the mouse
   PImage small; // Downscaled copy of the frame for detection, allocated once
 
+  // Shared with the detection thread. While "detecting" is true only that thread touches "small" and "opencv"
+  volatile boolean detecting;
+  volatile int targetX, targetY;
+
   Crosshair (int size, boolean useFaceDetection){
     this.size = size;
-    x = y = 0;
+    x = targetX = width/2;
+    y = targetY = height/2;
 
     if (useFaceDetection) {
       opencv = new OpenCV(TermoVision.this, width/DETECT_SCALE, height/DETECT_SCALE);
@@ -58,16 +65,33 @@ class Crosshair{
     aim.updatePixels();
   }
   
-  // Follows the first detected face (or stays put if there's none), or the mouse without face detection
-  void update(PImage frame){
+  // Follows the first detected face (or stays put if there's none), or the mouse without face detection.
+  // Detection is slower than the frame rate, so it runs in a background thread and the crosshair eases towards its last result
+  void update(int t, PImage frame){
     if (opencv == null) {
       x = mouseX;
       y = mouseY;
       return;
     }
 
-    small.copy(frame, 0, 0, frame.width, frame.height, 0, 0, small.width, small.height);
+    if (!detecting) {
+      small.copy(frame, 0, 0, frame.width, frame.height, 0, 0, small.width, small.height);
+      detecting = true;
 
+      Thread detection = new Thread(this::detect);
+      detection.setDaemon(true); // Doesn't keep the sketch alive on exit
+      detection.start();
+    }
+
+    // Time-based easing, so it moves the same at any frame rate
+    float k = 1 - exp(-(t - tPrev) / EASING_MS);
+    x = lerp(x, targetX, k);
+    y = lerp(y, targetY, k);
+    tPrev = t;
+  }
+
+  // Runs in the detection thread
+  void detect(){
     opencv.loadImage(small);
     Rectangle[] faces = opencv.detect();
 
@@ -77,9 +101,11 @@ class Crosshair{
     //}
 
     if (faces.length > 0) {
-      x = (faces[0].x + faces[0].width/2) * DETECT_SCALE;
-      y = (faces[0].y + faces[0].height/2) * DETECT_SCALE;
+      targetX = (faces[0].x + faces[0].width/2) * DETECT_SCALE;
+      targetY = (faces[0].y + faces[0].height/2) * DETECT_SCALE;
     }
+
+    detecting = false; // Last, hands "small" back to the main thread
   }
 
   void draw(){

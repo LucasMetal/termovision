@@ -69,7 +69,7 @@ void setup() {
 
 void draw() {
 
-  surface.setTitle("fps " + nf(frameRate, 0, 1)); // show FPS in title
+  surface.setTitle("TermoVision - FPS " + nf(frameRate, 0, 1)); // show FPS in title
   
   int t = millis();  
   
@@ -90,7 +90,7 @@ void draw() {
   mainMessage.update(t);
   mainMessage.draw();
 
-  crosshair.update(camFrame);
+  crosshair.update(t, camFrame);
   crosshair.draw();
   
 }
