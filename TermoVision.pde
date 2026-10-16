@@ -12,6 +12,7 @@ Boolean useOpenCV = true;
 PImage camFrame;
 PImage fakeFrame;
 int tDemoStart, demoStep = -1;
+boolean wasOn; // Power state on the previous frame, to detect when it turns on
 
 Crosshair crosshair;
 Grid grid;
@@ -28,7 +29,7 @@ void settings() {
    */
    
   // Uncomment for testing
-  //useCam = false;
+  useCam = false;
   //useOpenCV = false;
 
   // Not P2D: with the camera it's barely faster (OpenCV is the bottleneck) and face tracking gets jumpy,
@@ -57,13 +58,11 @@ void setup() {
   crosshair = new Crosshair(200, useCam && useOpenCV);
 
   grid = new Grid(width - 500, 100, 400, 300, 10, 180);
-  grid.show(20);
 
   codePage = new CodePage();
 
-  mainMessage = new MainMessage (width/3, height - 200);
-  startInitMessages();
-  
+  mainMessage = new MainMessage (width/2, height - 200); // Centered
+
   println ("Started");
 }
 
@@ -79,7 +78,11 @@ void draw() {
   runDemo(t);
   
   powerSystem.draw(t, camFrame);
-  if (!powerSystem.isOn()) return;
+
+  boolean on = powerSystem.isOn();
+  if (on && !wasOn && demoStep < 0) startBootSequence(); // The demo runs its own sequence
+  wasOn = on;
+  if (!on) return;
 
   grid.update(t);
   grid.draw();
@@ -96,10 +99,15 @@ void draw() {
 }
 
 void mousePressed() {
+  if (!powerSystem.isOn()) return; // It would play unseen while off
   mainMessage.startRandom();
 }
 
 void keyPressed(){
+  // Showing the code page or the grid starts a timer that would run out unseen while off.
+  // Queued messages (f, i) are fine, the queue waits
+  if (!powerSystem.isOn() && (key == 'c' || key == 'g')) return;
+
   switch(key){
     case 'c':{
       codePage.showNext();
@@ -138,6 +146,12 @@ void keyPressed(){
 
 void captureEvent(Capture c) {
   c.read();
+}
+
+// Runs each time the power turns on outside the demo. Not in setup, the sketch starts off and the grid would time out unseen
+void startBootSequence(){
+  grid.show(20);
+  startInitMessages();
 }
 
 void startInitMessages(){

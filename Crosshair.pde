@@ -29,7 +29,9 @@ class Crosshair{
   
   void createAim() {
 
-    aim = createGraphics (200, 200);
+    float s = size / 200.0; // The reticle was designed at 200 px, everything is scaled from that
+
+    aim = createGraphics (size, size);
     aim.beginDraw();
     aim.background(0);
     aim.smooth();
@@ -37,20 +39,20 @@ class Crosshair{
     // Visible circle
     aim.noStroke();
     aim.fill(255);
-    aim.circle(aim.width/2, aim.height/2, 200);
+    aim.circle(aim.width/2, aim.height/2, size);
 
     // Remove lines
     aim.stroke(0);
     aim.noFill();
-    aim.strokeWeight(5);
-    aim.line(40, 100, 160, 100);
-    aim.line(100, 110, 100, 90);
-    aim.line(100, 0, 100, 40);
-    aim.line(100, 200, 100, 160);
+    aim.strokeWeight(5 * s);
+    aim.line(40 * s, 100 * s, 160 * s, 100 * s);
+    aim.line(100 * s, 110 * s, 100 * s, 90 * s);
+    aim.line(100 * s, 0, 100 * s, 40 * s);
+    aim.line(100 * s, 200 * s, 100 * s, 160 * s);
 
     // Remove circle
-    aim.strokeWeight(5);
-    aim.circle(aim.width/2, aim.height/2, 120);
+    aim.strokeWeight(5 * s);
+    aim.circle(aim.width/2, aim.height/2, 120 * s);
 
     aim.endDraw();
 
