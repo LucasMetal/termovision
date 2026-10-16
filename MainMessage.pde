@@ -60,6 +60,12 @@ class MainMessage {
     println("enqueued : " + message);
   }
 
+  // Skips the message if it's already showing or waiting, for events that can repeat quickly (e.g. face tracking)
+  void enqueueOnce(String message) {
+    if (message.equals(this.message) || phrasesQueue.contains(message)) return;
+    enqueue(message);
+  }
+
   // Everything is derived from the time elapsed since start: writing, then flashing for FLASH_TIME ms, then idle
   void update(int t) {
     elapsed = t - tStart;

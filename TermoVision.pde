@@ -29,7 +29,7 @@ void settings() {
    */
    
   // Uncomment for testing
-  useCam = false;
+  //useCam = false;
   //useOpenCV = false;
 
   // Not P2D: with the camera it's barely faster (OpenCV is the bottleneck) and face tracking gets jumpy,
@@ -94,6 +94,8 @@ void draw() {
   mainMessage.draw();
 
   crosshair.update(t, camFrame);
+  if (crosshair.targetAcquired) mainMessage.enqueueOnce("TARGET ACQUIRED");
+  if (crosshair.targetLost) mainMessage.enqueueOnce("SEARCH MODE");
   crosshair.draw();
   
 }

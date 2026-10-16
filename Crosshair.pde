@@ -9,9 +9,21 @@ class Crosshair{
   OpenCV opencv; // null when following the mouse
   PImage small; // Downscaled copy of the frame for detection, allocated once
 
+  final int LOST_MS = 1500; // Without a face for this long, the target is lost (detection misses some frames)
+
+  // Search mode: without a target it scans the scene in straight lines, each one with its own speed (px per second) and pause
+  final float SEARCH_MIN_SPEED = 400, SEARCH_MAX_SPEED = 2000;
+  final int SEARCH_MAX_PAUSE_MS = 400;
+  float segFromX, segFromY, segToX, segToY;
+  int tSegStart, segTravelMs, segPauseMs;
+
   // Shared with the detection thread. While "detecting" is true only that thread touches "small" and "opencv"
   volatile boolean detecting;
   volatile int targetX, targetY;
+  volatile int tLastSeen = -LOST_MS; // millis() of the last detected face
+
+  // Target tracking. targetAcquired/targetLost are true only on the frame it changes
+  boolean tracking, targetAcquired, targetLost;
 
   Crosshair (int size, boolean useFaceDetection){
     this.size = size;
@@ -67,7 +79,7 @@ class Crosshair{
     aim.updatePixels();
   }
   
-  // Follows the first detected face (or stays put if there's none), or the mouse without face detection.
+  // Follows the first detected face, searches the scene when there's none, or follows the mouse without face detection.
   // Detection is slower than the frame rate, so it runs in a background thread and the crosshair eases towards its last result
   void update(int t, PImage frame){
     if (opencv == null) {
@@ -85,11 +97,42 @@ class Crosshair{
       detection.start();
     }
 
-    // Time-based easing, so it moves the same at any frame rate
-    float k = 1 - exp(-(t - tPrev) / EASING_MS);
-    x = lerp(x, targetX, k);
-    y = lerp(y, targetY, k);
+    boolean wasTracking = tracking;
+    tracking = t - tLastSeen < LOST_MS;
+    targetAcquired = tracking && !wasTracking;
+    targetLost = !tracking && wasTracking;
+
+    if (tracking) {
+      // Time-based easing, so it moves the same at any frame rate
+      float k = 1 - exp(-(t - tPrev) / EASING_MS);
+      x = lerp(x, targetX, k);
+      y = lerp(y, targetY, k);
+    } else {
+      search(t);
+    }
     tPrev = t;
+  }
+
+  // Moves along the current straight segment, starting a new one when it ends (or when the search starts)
+  void search(int t){
+    if (targetLost || t - tSegStart >= segTravelMs + segPauseMs) newSegment(t);
+
+    float p = constrain((t - tSegStart) / (float)segTravelMs, 0, 1); // Stays at the end during the pause
+    x = lerp(segFromX, segToX, p);
+    y = lerp(segFromY, segToY, p);
+  }
+
+  // From the current position to a random point on screen (keeping the reticle inside), with random speed and pause
+  void newSegment(int t){
+    segFromX = x;
+    segFromY = y;
+    segToX = random(size/2, width - size/2);
+    segToY = random(size/2, height - size/2);
+
+    float speed = random(SEARCH_MIN_SPEED, SEARCH_MAX_SPEED);
+    segTravelMs = max(1, (int)(dist(segFromX, segFromY, segToX, segToY) / speed * 1000));
+    segPauseMs = (int)random(SEARCH_MAX_PAUSE_MS);
+    tSegStart = t;
   }
 
   // Runs in the detection thread
@@ -105,13 +148,14 @@ class Crosshair{
     if (faces.length > 0) {
       targetX = (faces[0].x + faces[0].width/2) * DETECT_SCALE;
       targetY = (faces[0].y + faces[0].height/2) * DETECT_SCALE;
+      tLastSeen = millis();
     }
 
     detecting = false; // Last, hands "small" back to the main thread
   }
 
   void draw(){
-    image(aim, x - aim.width/2, y - aim.height/2);    
+    image(aim, x - aim.width/2, y - aim.height/2);
   }
 
 /*
