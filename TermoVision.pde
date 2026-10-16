@@ -3,7 +3,6 @@ import gab.opencv.*;
 import java.awt.*;
 
 // Artifacts ideas:
-// Target Acquired (with maximazed pic)
 // Port (port open/closed, base for adding an external piece of hardware maybe?)
 
 Capture cam;
@@ -19,6 +18,7 @@ Grid grid;
 MainMessage mainMessage;
 PowerSystem powerSystem;
 CodePage codePage;
+TargetPanel targetPanel;
 
 void settings() {
   /*
@@ -63,6 +63,8 @@ void setup() {
 
   mainMessage = new MainMessage (width/2, height - 200); // Centered
 
+  targetPanel = new TargetPanel((int)(width * 0.4), (int)(height * 0.5), 60);
+
   println ("Started");
 }
 
@@ -94,10 +96,14 @@ void draw() {
   mainMessage.draw();
 
   crosshair.update(t, camFrame);
-  if (crosshair.targetAcquired) mainMessage.enqueueOnce("TARGET ACQUIRED");
+  if (crosshair.targetAcquired) targetPanel.show(camFrame, crosshair.face);
   if (crosshair.targetLost) mainMessage.enqueueOnce("SEARCH MODE");
+
+  targetPanel.update(t);
+  if (targetPanel.identified) mainMessage.enqueueOnce("IDENT POSITIVE");
+  targetPanel.draw();
+
   crosshair.draw();
-  
 }
 
 void mousePressed() {
@@ -108,7 +114,7 @@ void mousePressed() {
 void keyPressed(){
   // Showing the code page or the grid starts a timer that would run out unseen while off.
   // Queued messages (f, i) are fine, the queue waits
-  if (!powerSystem.isOn() && (key == 'c' || key == 'g')) return;
+  if (!powerSystem.isOn() && (key == 'c' || key == 'g' || key == 't')) return;
 
   switch(key){
     case 'c':{
@@ -130,7 +136,11 @@ void keyPressed(){
     case 'i':{
       startInitMessages();
       break;
-    }    
+    }
+    case 't':{ // Target panel around the mouse, for testing without face detection
+      targetPanel.show(camFrame, new Rectangle(mouseX - 150, mouseY - 150, 300, 300));
+      break;
+    }
     case '1':{
       powerSystem.powerOn();
       break;

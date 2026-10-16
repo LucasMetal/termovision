@@ -21,6 +21,7 @@ class Crosshair{
   volatile boolean detecting;
   volatile int targetX, targetY;
   volatile int tLastSeen = -LOST_MS; // millis() of the last detected face
+  volatile Rectangle face; // Last detected face at full resolution. A new object each time, so it's never read half updated
 
   // Target tracking. targetAcquired/targetLost are true only on the frame it changes
   boolean tracking, targetAcquired, targetLost;
@@ -146,8 +147,10 @@ class Crosshair{
     //}
 
     if (faces.length > 0) {
-      targetX = (faces[0].x + faces[0].width/2) * DETECT_SCALE;
-      targetY = (faces[0].y + faces[0].height/2) * DETECT_SCALE;
+      Rectangle f = faces[0];
+      face = new Rectangle(f.x * DETECT_SCALE, f.y * DETECT_SCALE, f.width * DETECT_SCALE, f.height * DETECT_SCALE);
+      targetX = face.x + face.width/2;
+      targetY = face.y + face.height/2;
       tLastSeen = millis();
     }
 
