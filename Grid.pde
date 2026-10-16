@@ -46,6 +46,10 @@ class Grid{
     yOffset = random(2 * h);
   }
 
+  void hide(){
+    visible = false;
+  }
+
   // The scan lines position is derived from the time elapsed since show
   void update(int t){
 

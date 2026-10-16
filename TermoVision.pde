@@ -79,10 +79,12 @@ void draw() {
   
   runDemo(t);
   
-  powerSystem.draw(t, camFrame);
+  powerSystem.update(t);
+  powerSystem.draw(camFrame);
 
   boolean on = powerSystem.isOn();
   if (on && !wasOn && demoStep < 0) startBootSequence(); // The demo runs its own sequence
+  if (!on && wasOn) clearHud(); // Started powering off
   wasOn = on;
   if (!on) return;
 
@@ -164,6 +166,15 @@ void captureEvent(Capture c) {
 void startBootSequence(){
   grid.show(20);
   startInitMessages();
+}
+
+// Runs when the power turns off, so each boot starts clean instead of resuming what was left (e.g. queued messages)
+void clearHud(){
+  mainMessage.clear();
+  codePage.hide();
+  targetPanel.hide();
+  grid.hide();
+  crosshair.resetTracking();
 }
 
 void startInitMessages(){

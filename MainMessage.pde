@@ -60,6 +60,12 @@ class MainMessage {
     println("enqueued : " + message);
   }
 
+  // Drops the current message and everything queued
+  void clear() {
+    phrasesQueue.clear();
+    message = null;
+  }
+
   // Skips the message if it's already showing or waiting, for events that can repeat quickly (e.g. face tracking)
   void enqueueOnce(String message) {
     if (message.equals(this.message) || phrasesQueue.contains(message)) return;
@@ -82,6 +88,7 @@ class MainMessage {
     if (message == null) return;
 
     textFont(font);
+    fill(255); // Set explicitly, the current fill could be anything another artifact left
 
     int typeTime = message.length() * speed;
 

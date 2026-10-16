@@ -27,6 +27,10 @@ class TargetPanel {
     return steps != null;
   }
 
+  void hide() {
+    steps = null;
+  }
+
   // Takes the close-up from the frame now, the panel shows that snapshot
   void show(PImage frame, Rectangle face) {
     if (isVisible()) return;

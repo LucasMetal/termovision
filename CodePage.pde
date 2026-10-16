@@ -56,6 +56,10 @@ class CodePage {
     tStart = millis();
   }
 
+  void hide() {
+    page = null;
+  }
+
   // Everything is derived from the time elapsed since show: writing, then flashing, then hidden
   void update(int t) {
     if (page == null) return;

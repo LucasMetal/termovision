@@ -40,6 +40,11 @@ class Crosshair{
     createAim();
   }
   
+  // Forgets the current target, so a target lost while powered off doesn't fire "targetLost" on the next boot
+  void resetTracking() {
+    tracking = false;
+  }
+
   void createAim() {
 
     float s = size / 200.0; // The reticle was designed at 200 px, everything is scaled from that
