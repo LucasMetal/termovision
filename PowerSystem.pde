@@ -17,9 +17,11 @@ class PowerSystem {
 
   PowerState state;
   int tStart, elapsed; // Since the current power on/off started
+  AlternatePower alternatePower; // The POWERING_ALTERNATE_ON sequence
 
   PowerSystem () {
     state = PowerState.OFF;
+    alternatePower = new AlternatePower();
   }
 
   void powerOn() {
@@ -41,6 +43,7 @@ class PowerSystem {
     this.state = state;
     tStart = millis();
     elapsed = 0;
+    if (state == PowerState.POWERING_ALTERNATE_ON) alternatePower.reset();
   }
 
   boolean isOn() {
@@ -52,9 +55,12 @@ class PowerSystem {
     elapsed = t - tStart;
 
     switch (state) {
-      case POWERING_ALTERNATE_ON: // TODO, same as POWERING_ON for now
       case POWERING_ON:
         if (elapsed >= POWERING_ON_PHASES * PHASE_MS) state = PowerState.ON;
+        break;
+      case POWERING_ALTERNATE_ON:
+        alternatePower.update(elapsed);
+        if (alternatePower.isDone()) state = PowerState.ON;
         break;
       case POWERING_OFF:
         if (elapsed >= POWERING_OFF_PHASES * PHASE_MS) state = PowerState.OFF;
@@ -119,7 +125,10 @@ class PowerSystem {
       case OFF: // Just the black background
         break;
 
-      case POWERING_ALTERNATE_ON: // TODO, same as POWERING_ON for now
+      case POWERING_ALTERNATE_ON:
+        alternatePower.draw(camFrame);
+        break;
+
       case POWERING_ON:{
 
         float p = phaseProgress();
