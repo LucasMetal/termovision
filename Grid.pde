@@ -19,7 +19,7 @@ class Grid{
   void initGrid(){
     g = createGraphics(w+1, h+1); // +1 so it shows the border
     g.beginDraw();
-    g.stroke(255);
+    g.stroke(HUD_COLOR);
 
     // Vertical lines
     for (int i = 0; i <= step; i++ ) {
@@ -78,7 +78,7 @@ class Grid{
     image(g, x, y);
 
     push();
-    stroke(255);
+    stroke(HUD_COLOR);
     strokeWeight(5);
     line(x + xLine, y, x + xLine, y + h);
     line(x, y + yLine, x + w, y + yLine);

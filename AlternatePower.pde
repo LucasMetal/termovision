@@ -72,10 +72,8 @@ class AlternatePower {
     if (elapsed < GLITCH_MS) {
       drawGlitched(frame, 1 - elapsed / (float)GLITCH_MS);
     } else {
-      tint(#FF0000); // Red
       image(frame, 0, 0, width, height);
     }
-    noTint();
 
     if (isBoardVisible()) {
       tint(255, 240); // Almost opaque, the video shows a little through it
@@ -104,27 +102,25 @@ class AlternatePower {
   void drawGlitched(PImage frame, float intensity) {
     if (random(1) < intensity * 0.15) return; // Dropped frame, stays black
 
-    tint(#FF0000);
-
     // Vertical hold slipping: the image rolls, wrapping around
     int roll = random(1) < intensity * 0.3 ? (int)random(-height / 3, height / 3) : 0;
     image(frame, 0, roll, width, height);
     if (roll != 0) image(frame, 0, roll > 0 ? roll - height : roll + height, width, height);
 
-    // Bands of the image shifted sideways
+    // Bands of the image shifted sideways (the frame can be smaller than the screen, so the source rows are scaled)
     int bands = (int)(intensity * 14);
     for (int i = 0; i < bands; i++) {
       int y = (int)random(height);
       int h = (int)random(4, 50);
       float dx = random(-1, 1) * 250 * intensity;
-      image(frame, dx, y, width, h, 0, y, frame.width, y + h);
+      float s = frame.height / (float)height;
+      image(frame, dx, y, width, h, 0, (int)(y * s), frame.width, (int)((y + h) * s));
     }
-    noTint();
 
     // Noise lines
     int lines = (int)(intensity * 8);
     for (int i = 0; i < lines; i++) {
-      stroke(255, random(60, 200));
+      stroke(HUD_COLOR, random(60, 200));
       strokeWeight(random(1, 3));
       float y = random(height);
       line(0, y, width, y);
@@ -156,7 +152,7 @@ class AlternatePower {
     float[] weights = {weight * 2.2, weight * 1.5, weight};
     float[] alphas = {40, 80, 255};
     for (int pass = 0; pass < weights.length; pass++) {
-      stroke(255, 240, 240, alphas[pass]);
+      stroke(HUD_COLOR, alphas[pass]);
       strokeWeight(weights[pass]);
       beginShape();
       for (PVector p : points) vertex(p.x, p.y);

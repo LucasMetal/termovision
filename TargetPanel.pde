@@ -48,6 +48,7 @@ class TargetPanel {
 
     PImage crop = frame.get(cropX, cropY, (int)cropW, (int)cropH);
     crop.resize(w, h);
+    crop = vision.applyCopy(crop); // The T2 look, at the panel's full resolution
 
     steps = new PImage[BLOCKS.length];
     for (int i = 0; i < BLOCKS.length; i++) steps[i] = pixelate(crop, BLOCKS[i]);
@@ -98,13 +99,11 @@ class TargetPanel {
 
     push();
 
-    tint(#FF0000); // Red, like the camera frame
     image(steps[min(elapsed / STEP_MS, BLOCKS.length - 1)], x, y);
-    noTint();
 
     if (elapsed >= BLOCKS.length * STEP_MS) {
       textFont(font);
-      fill(255);
+      fill(HUD_COLOR);
       textAlign(CENTER, BASELINE);
       text("TARGET", x + w / 2, y + h * 0.68);
       text("ACQUIRED", x + w / 2, y + h * 0.68 + capHeight * 1.25); // Line spacing like in the movie

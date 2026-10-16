@@ -8,7 +8,11 @@ import java.awt.*;
 Capture cam;
 Boolean useCam = true;
 Boolean useOpenCV = true;
-PImage camFrame;
+PImage camFrame; // Raw frame, for face detection
+PImage visionFrame; // Frame with the T2 look, what's drawn
+VisionFilter vision;
+
+final color HUD_COLOR = #D7F0F0; // The movie's HUD text: pale cyan-white, like the blown out highlights (ref/image sample*.png)
 PImage fakeFrame;
 int tDemoStart, demoStep = -1;
 boolean wasOn; // Power state on the previous frame, to detect when it turns on
@@ -53,6 +57,8 @@ void setup() {
   
   // Init artifacts
 
+  vision = new VisionFilter();
+
   powerSystem = new PowerSystem();
   
   crosshair = new Crosshair(200, useCam && useOpenCV);
@@ -80,7 +86,8 @@ void draw() {
   runDemo(t);
   
   powerSystem.update(t);
-  powerSystem.draw(camFrame);
+  visionFrame = vision.apply(camFrame);
+  powerSystem.draw(visionFrame);
 
   boolean on = powerSystem.isOn();
   if (on && !wasOn && demoStep < 0) startBootSequence(); // The demo runs its own sequence

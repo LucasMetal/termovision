@@ -76,9 +76,9 @@ class Crosshair{
 
     aim.loadPixels();
 
-    color c = color (255, 255, 255, 80); // Semi transparent white
+    color c = color(red(HUD_COLOR), green(HUD_COLOR), blue(HUD_COLOR), 80); // Semi transparent, in the HUD color
 
-    // Whites to semitransparent, black to invisible
+    // Whites to the semitransparent HUD color, black to invisible
     for (var i=0; i < aim.pixels.length; i++) {
       aim.pixels[i] = (aim.pixels[i] & 0xFF) == 0xFF ? c : 0; // visible / hidden
     }

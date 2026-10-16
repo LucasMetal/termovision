@@ -88,7 +88,7 @@ class CodePage {
 
     push();
     textFont(font);
-    fill(255);
+    fill(HUD_COLOR);
     textAlign(CENTER, BASELINE);
 
     int remaining = lineCount;
@@ -110,7 +110,7 @@ class CodePage {
   void drawMonospaced(String line, float x, float y, float charWidth) {
     float capHeight = textAscent() * 0.75; // Empirical for modern-vision.ttf
 
-    stroke(255);
+    stroke(HUD_COLOR);
     strokeWeight(textAscent() * 0.08);
 
     for (int i = 0; i < line.length(); i++) {

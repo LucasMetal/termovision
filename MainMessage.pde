@@ -88,7 +88,7 @@ class MainMessage {
     if (message == null) return;
 
     textFont(font);
-    fill(255); // Set explicitly, the current fill could be anything another artifact left
+    fill(HUD_COLOR); // Set explicitly, the current fill could be anything another artifact left
 
     int typeTime = message.length() * speed;
 
@@ -111,7 +111,7 @@ class MainMessage {
   void drawRectangle(float left, String typed) {
     push();
     noStroke(); // Otherwise the default black stroke shows as a border on bright frames
-    fill(255);
+    fill(HUD_COLOR);
     rect(left + textWidth(typed) + capHeight * 0.8, y - capHeight, capHeight, capHeight);
     pop();
   }

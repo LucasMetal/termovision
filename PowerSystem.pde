@@ -79,11 +79,11 @@ class PowerSystem {
     return constrain((elapsed % PHASE_MS) / (float)PHASE_MS, 0, 1);
   }
 
+  // camFrame already has the T2 look (VisionFilter), possibly at a lower resolution: it's always drawn scaled to the screen
   void draw(PImage camFrame) {
 
     push();
     if (state != PowerState.ON) background(0); // When on, the frame covers the whole screen
-    tint(#FF0000); // Red
 
     switch (state) {
       case POWERING_OFF:{
