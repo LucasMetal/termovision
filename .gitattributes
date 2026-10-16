@@ -1,0 +1,14 @@
+# Every text file is checked out with CRLF line endings, whatever each machine's Git settings are
+* text=auto eol=crlf
+
+# Binary files: never converted
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ttf binary
+*.otf binary
+*.vlw binary
+*.jar binary
+*.zip binary
+*.pdf binary
