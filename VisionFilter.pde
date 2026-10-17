@@ -4,6 +4,12 @@
 class VisionFilter {
 
   final float CONTRAST = 1.4; // Around mid grey. Higher crushes the shadows and blows out more highlights
+  final float GRAIN = 3; // Film grain strength (standard deviation, in brightness levels). 0 disables it
+
+  // Grain: a tile of random brightness offsets, read at a different random offset every frame so it moves.
+  // Added before the gradient map, so like film grain it shows in shadows and mid tones but not in the clipped highlights
+  final int TILE = 256; // Power of 2, for the wrap around with &
+  byte[] grain = new byte[TILE * TILE];
 
   // Brightness (0..255) -> color
   final int[] STOP_AT = {0, 110, 210, 255};
@@ -19,6 +25,8 @@ class VisionFilter {
       while (x > STOP_AT[s + 1]) s++;
       lut[v] = lerpColor(STOP_COLOR[s], STOP_COLOR[s + 1], (x - STOP_AT[s]) / (float)(STOP_AT[s + 1] - STOP_AT[s]));
     }
+
+    for (int i = 0; i < grain.length; i++) grain[i] = (byte)constrain(round(randomGaussian() * GRAIN), -127, 127);
   }
 
   // The frame with the T2 look, same size. Returns the same image every time.
@@ -31,23 +39,30 @@ class VisionFilter {
     out.loadPixels();
     final int[] src = frame.pixels, dst = out.pixels;
     final int w = frame.width;
+    final int ox = (int)random(TILE), oy = (int)random(TILE); // Where the grain tile is read this frame
     java.util.stream.IntStream.range(0, frame.height).parallel().forEach(y -> {
-      for (int i = y * w, end = i + w; i < end; i++) dst[i] = look(src[i]);
+      int grainRow = ((y + oy) & (TILE - 1)) * TILE;
+      for (int x = 0, i = y * w; x < w; x++, i++) {
+        int b = luma(src[i]) + grain[grainRow + ((x + ox) & (TILE - 1))];
+        dst[i] = lut[b < 0 ? 0 : b > 255 ? 255 : b];
+      }
     });
     out.updatePixels();
     return out;
   }
 
-  // A new image with the T2 look, same size as the original (for one-off images, like the target panel close-up)
+  // A new image with the T2 look, same size as the original (for one-off images, like the target panel close-up).
+  // Without grain: on a still image it would just look like a dirty picture
   PImage applyCopy(PImage img) {
     PImage copy = img.copy();
     copy.loadPixels();
-    for (int i = 0; i < copy.pixels.length; i++) copy.pixels[i] = look(copy.pixels[i]);
+    for (int i = 0; i < copy.pixels.length; i++) copy.pixels[i] = lut[luma(copy.pixels[i])];
     copy.updatePixels();
     return copy;
   }
 
-  int look(int c) {
-    return lut[(((c >> 16) & 0xFF) * 77 + ((c >> 8) & 0xFF) * 150 + (c & 0xFF) * 29) >> 8]; // Brightness, weighted like the eye
+  // Brightness 0..255, weighted like the eye
+  int luma(int c) {
+    return (((c >> 16) & 0xFF) * 77 + ((c >> 8) & 0xFF) * 150 + (c & 0xFF) * 29) >> 8;
   }
 }
