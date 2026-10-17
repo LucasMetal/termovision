@@ -33,7 +33,7 @@ void settings() {
    */
    
   // Uncomment for testing
-  //useCam = false;
+  useCam = false;
   //useOpenCV = false;
 
   // Not P2D: with the camera it's barely faster (OpenCV is the bottleneck) and face tracking gets jumpy,
@@ -162,6 +162,10 @@ void keyPressed(){
       powerSystem.powerOff();
       break;
     }
+    case '4':{
+      powerSystem.powerOffDestroyed();
+      break;
+    }
   }
 }
 
@@ -182,6 +186,17 @@ void clearHud(){
   targetPanel.hide();
   grid.hide();
   crosshair.resetTracking();
+}
+
+// Full screen CRT scanlines overlay, "alpha" 0..255. Only for malfunctions: alternate power and destroyed shutdown
+PGraphics createScanlines(int alpha){
+  PGraphics g = createGraphics(width, height);
+  g.beginDraw();
+  g.stroke(0, alpha);
+  g.strokeWeight(1);
+  for (int y = 0; y < height; y += 4) g.line(0, y, width, y);
+  g.endDraw();
+  return g;
 }
 
 void startInitMessages(){

@@ -6,6 +6,7 @@ enum PowerState {
     OFF,
     POWERING_ON,
     POWERING_ALTERNATE_ON,
+    POWERING_OFF_DESTROYED,
     ON
 }
 
@@ -18,10 +19,12 @@ class PowerSystem {
   PowerState state;
   int tStart, elapsed; // Since the current power on/off started
   AlternatePower alternatePower; // The POWERING_ALTERNATE_ON sequence
+  DestroyedShutdown destroyedShutdown; // The POWERING_OFF_DESTROYED sequence
 
   PowerSystem () {
     state = PowerState.OFF;
     alternatePower = new AlternatePower();
+    destroyedShutdown = new DestroyedShutdown();
   }
 
   void powerOn() {
@@ -39,11 +42,17 @@ class PowerSystem {
     start(PowerState.POWERING_OFF);
   }
 
+  void powerOffDestroyed() {
+    if (state != PowerState.ON) return;
+    start(PowerState.POWERING_OFF_DESTROYED);
+  }
+
   void start(PowerState state) {
     this.state = state;
     tStart = millis();
     elapsed = 0;
     if (state == PowerState.POWERING_ALTERNATE_ON) alternatePower.reset();
+    if (state == PowerState.POWERING_OFF_DESTROYED) destroyedShutdown.reset();
   }
 
   boolean isOn() {
@@ -65,6 +74,10 @@ class PowerSystem {
       case POWERING_OFF:
         if (elapsed >= POWERING_OFF_PHASES * PHASE_MS) state = PowerState.OFF;
         break;
+      case POWERING_OFF_DESTROYED:
+        destroyedShutdown.update(elapsed);
+        if (destroyedShutdown.isDone()) state = PowerState.OFF;
+        break;
       default:
         break;
     }
@@ -79,7 +92,7 @@ class PowerSystem {
     return constrain((elapsed % PHASE_MS) / (float)PHASE_MS, 0, 1);
   }
 
-  // camFrame already has the T2 look (VisionFilter), possibly at a lower resolution: it's always drawn scaled to the screen
+  // camFrame already has the T2 look (VisionFilter)
   void draw(PImage camFrame) {
 
     push();
@@ -88,16 +101,8 @@ class PowerSystem {
     switch (state) {
       case POWERING_OFF:{
 
-        // When turned off:
-        // compact to thick horizontal line (you can still see the image)
-        // shrink the line to a big white point
-        // shrink point till it disappears
-
-        // When destroyed:
-        // compact to red thick horizontal line
-        // shrink the line to a red point
-        // set point grey
-        // shrink point till it disappears
+        // Compact to a thin horizontal line (you can still see the image), shrink it horizontally, then a grey point
+        // shrinks till it disappears. When destroyed it's DestroyedShutdown instead
 
         float p = phaseProgress();
         float lineHeight = height * 0.01;
@@ -127,6 +132,10 @@ class PowerSystem {
 
       case POWERING_ALTERNATE_ON:
         alternatePower.draw(camFrame);
+        break;
+
+      case POWERING_OFF_DESTROYED:
+        destroyedShutdown.draw();
         break;
 
       case POWERING_ON:{

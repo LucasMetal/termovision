@@ -38,7 +38,7 @@ class AlternatePower {
     bh = (int)(height * BOARD_H);
 
     board = createBoard();
-    scanlines = createScanlines();
+    scanlines = createScanlines(70);
 
     path = toScreen(PATH);
     for (int i = 1; i < path.length; i++) pathLength += PVector.dist(path[i - 1], path[i]);
@@ -403,16 +403,5 @@ class AlternatePower {
       xy[2 * i + 1] = points[i][1];
     }
     return xy;
-  }
-
-  // CRT scanlines over everything during the sequence
-  PGraphics createScanlines() {
-    PGraphics g = createGraphics(width, height);
-    g.beginDraw();
-    g.stroke(0, 70);
-    g.strokeWeight(1);
-    for (int y = 0; y < height; y += 4) g.line(0, y, width, y);
-    g.endDraw();
-    return g;
   }
 }
